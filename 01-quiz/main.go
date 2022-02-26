@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 )
 
 func main() {
@@ -27,13 +28,30 @@ func main() {
 
 	problems := parseLines(lines)
 
-	startQuiz(problems)
+	fmt.Printf("Enter the time in seconds to finish quiz: (Default = 30 seconds): ")
+	var userTime int
+	fmt.Scan(&userTime)
+
+	if userTime > 0 {
+		sec := userTime + 2
+		deadline := time.Now().Add(time.Second * time.Duration(sec))
+
+		fmt.Printf("\nQuiz started! You have %d seconds to answer all the questions.\n", userTime)
+		startQuiz(problems, deadline)
+	}
 }
 
-func startQuiz(problems []problem) {
+func startQuiz(problems []problem, deadline time.Time) {
 	correct := 0
 
 	for i, p := range problems {
+		timeRemaining := getTimeRemaining(deadline)
+
+		if timeRemaining.t <= 0 {
+			fmt.Println("Countdown reached!")
+			break
+		}
+
 		fmt.Printf("Problem #%d: %s = \n", i+1, p.question)
 		var answer string
 		fmt.Scanf("%s\n", &answer)
@@ -65,4 +83,31 @@ type problem struct {
 func exit(msg string) {
 	fmt.Println(msg)
 	os.Exit(1)
+}
+
+type countdown struct {
+	t int
+	d int
+	h int
+	m int
+	s int
+}
+
+func getTimeRemaining(t time.Time) countdown {
+	currentTime := time.Now()
+	difference := t.Sub(currentTime)
+
+	total := int(difference.Seconds())
+	days := int(total / (60 * 60 * 24))
+	hours := int(total / (60 * 60) % 24)
+	minutes := int(total/60) % 60
+	seconds := int(total % 60)
+
+	return countdown{
+		t: total,
+		d: days,
+		h: hours,
+		m: minutes,
+		s: seconds,
+	}
 }
